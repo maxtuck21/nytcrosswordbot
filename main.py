@@ -1,6 +1,9 @@
 import os
 import sys
 import random
+import argparse
+import numpy as np
+import matplotlib.pyplot as plt
 from time import mktime
 from datetime import datetime, timedelta
 from pytz import timezone
@@ -105,6 +108,14 @@ def build_output(uid_to_time, users):
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
     return output
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--send', help='Sends message to SEND_THREAD_ID on execution')
+    parser.add_argument('--commit', help='Commits parsed score data to DB. Only for use in production')
+    
+    return parser.parse_args()
+    
+
 def main():
     messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
     messages.reverse()
@@ -130,9 +141,11 @@ def main():
     add_new_users(users)
     output = build_output(uid_to_time, users)
     print(output)
-    if '--send' in sys.argv:
+    args = parse_args()
+    if args.send:
         client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
-    if '--commit' in sys.argv:
+    if args.commit:
         session.commit()
 
-main()
+if __name__ == "__main__":
+    main()
